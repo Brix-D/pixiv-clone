@@ -7,12 +7,25 @@ const port = isDev ? +(process.env.DEV_PORT ?? 8080): +(process.env.PROD_PORT ??
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: isDev },
+  ssr: true,
+  app: {
+      head: {
+          script: [
+            {
+                src: 'https://accounts.google.com/gsi/client',
+                async: true,
+                defer: true,
+            }
+        ],
+      },
+  },
   modules: ['@sidebase/nuxt-auth'],
   auth: {
       provider: {
           type: 'authjs',
       },
       baseURL: `${process.env.APP_BASE_URL}:${port}/api/auth`,
+
   },
 
   devServer: {
@@ -20,11 +33,12 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    googleAuthClientID: process.env.NUXT_GOOGLE_AUTH_CLIENT_ID,
     googleAuthSecret: process.env.NUXT_GOOGLE_AUTH_SECRET,
     authSecret: process.env.NUXT_AUTH_SECRET,
     public: {
+      googleAuthClientID: process.env.NUXT_GOOGLE_AUTH_CLIENT_ID,
       appBaseUrl: process.env.APP_BASE_URL,
+      nuxtBackendUrl: process.env.NUXT_BACKEND_URL,
     },
   },
 })
