@@ -13,9 +13,10 @@ export default NuxtAuthHandler({
          }),
     ],
     callbacks: {
-        async signIn(params: any) {
+        async signIn(params) {
             console.log('user', params.user, 'account', params.account, 'profile', params.profile, 'email', params.email, 'credentials', params.credentials);
             return true;
         },
+
     },
 });

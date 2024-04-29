@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+
+  mysql:
+    image: mysql:5.7.22
+    restart: always
+    tty: true
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql:/var/lib/mysql
+      - ./mysql_logs:/var/log/mysql
+      - ./mysql.cnf:/etc/mysql/conf.d/mysql.cnf:ro
+    env_file: .env
