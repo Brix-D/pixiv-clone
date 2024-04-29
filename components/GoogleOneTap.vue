@@ -1,13 +1,17 @@
 <template>
         <teleport to="body">
             <div id="g_id_onload"
-                v-if="status !== 'authenticated'"
-                :data-client_id="googleAuthClientID"
-                :data-login_uri="googleLoginUrl"
-                data-use_fedcm_for_prompt="true"
                 data-skip_prompt_cookie="next-auth.session-token"
+         
+               
+           
             >
+
+            <!--        :data-client_id="googleAuthClientID"
+                :data-login_uri="googleLoginUrl" -->
             <!-- 
+                     data-use_fedcm_for_prompt="true"
+                
                    data-auto_select="true"
                  data-ux_mode="redirect"
                 :data-allowed_parent_origin="config.public.appBaseUrl" data-callback="handleToken"
@@ -22,13 +26,15 @@ const route = useRoute();
 const config = useRuntimeConfig();
 const googleAuthClientID = config.public.googleAuthClientID;
 
-const googleLoginUrl = `${config.public.nuxtBackendUrl}/api/auth/callback/google`;
+// const googleLoginUrl = `${config.public.nuxtBackendUrl}/api/auth/callback/google`;
 
 const { getSession, data, status, signIn, getCsrfToken } = useAuth();
 // const { user: } = await getSession();
 // const sessionID = useCookie('SID');
 
 // console.log('sessionID', sessionID);
+
+
 
 const handleToken = async (token: {credential: string}) => {
     try {
@@ -52,10 +58,12 @@ const handleToken = async (token: {credential: string}) => {
         //     },
         //     credentials: 'include',
         // });
-        // console.log('response', response);
-
         
 
+        const response = await signIn('google', {
+            callbackUrl: '/',
+        });
+        console.log('response', response);
 
     } catch (error: unknown) {
         console.log('sign in error', error);
@@ -67,7 +75,15 @@ const handleToken = async (token: {credential: string}) => {
 }
 
 // window.handleToken = handleToken;
-
+onMounted(() => {
+    (window as any).google.accounts.id.initialize({
+      client_id: config.public.googleAuthClientID,
+      callback: handleToken,
+    });
+    if (status.value !== 'authenticated') {
+        (window as any).google.accounts.id.prompt();
+    }
+});
 </script>
 
 <style module lang="scss">

@@ -14,9 +14,13 @@ export default defineNuxtConfig({
             {
                 src: 'https://accounts.google.com/gsi/client',
                 async: true,
-                defer: true,
+                // defer: true,
             }
         ],
+        meta: [{
+          name: 'referrer',
+          content: 'no-referrer-when-downgrade',
+      }],
       },
   },
   modules: ['@sidebase/nuxt-auth'],
@@ -24,8 +28,8 @@ export default defineNuxtConfig({
       provider: {
           type: 'authjs',
       },
-      baseURL: `${process.env.APP_BASE_URL}:${port}/api/auth`,
-
+      // baseURL: `${process.env.APP_BASE_URL}:${port}/api/auth`,
+      baseURL: process.env.AUTH_ORIGIN,
   },
 
   devServer: {

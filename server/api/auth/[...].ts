@@ -1,9 +1,9 @@
-import { useEvent } from '#imports';
-
+import { useRequestEvent } from 'nuxt/app';
 import { NuxtAuthHandler } from '#auth';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { PrismaClient } from '@prisma/client';
 import GoogleProvider from 'next-auth/providers/google';
+import CredentialsProvider from 'next-auth/providers/credentials';
 
 const runtimeConfig = useRuntimeConfig();
 
@@ -20,14 +20,44 @@ export default NuxtAuthHandler({
          GoogleProvider.default({
             clientId: runtimeConfig.public.googleAuthClientID,
             clientSecret: runtimeConfig.googleAuthSecret,
+            // authorization: {
+            //     params: {
+            //       prompt: "consent",
+            //       access_type: "offline",
+            //       response_type: "code"
+            //     }
+            //   },
+            //   checks: ['none'],
             authorization: {
                 params: {
-                  prompt: "consent",
-                  access_type: "offline",
-                  response_type: "code"
-                }
-              }
+                    scope: 'openid email profile',
+                },
+            },
+            checks: ['none'],
          }),
+         // ts-expect-error You need to use .default here for it to work during SSR. May be fixed via Vite at some point
+        //  CredentialsProvider.default({
+        //     name: 'credentials',
+        //     credentials: {
+        //         token: {
+        //             label: 'token',
+        //             type: 'text',
+        //         },
+        //     },
+        //     async authorize(credentials: any, req: typeof useRequestEvent) {
+        //         const { token: _token } = credentials;
+        //         const decodedToken = Buffer.from(_token, 'base64url').toString();
+        //         const parts = decodedToken.split('.');
+        //         const payload = parts[1];
+        //         console.log('payload', payload);
+        //         const user = prisma.user.findFirst(
+        //             {
+        //                 where: { id: 'clvkrmglb0000xdlb08du5v6e' },
+        //             }
+        //         );
+        //         return user;
+        //     },
+        //  }),
     ],
     // cookies: {
     //     sessionToken: {
@@ -86,7 +116,7 @@ export default NuxtAuthHandler({
     //         },
     //       },
     // },
-    // debug: true,
+    // // debug: true,
     // logger: {
     //     debug(code, ...message) {
     //         console.debug(code, message)
