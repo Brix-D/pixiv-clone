@@ -9,6 +9,7 @@
         </pre>
         <div :class="$style['button-box']">
         <button @click="onLoginWithGoogle"> login With Google </button>
+        <button @click="onLoginWithCredentials"> login With Password </button>
         <button @click="onSignOut"> logout </button>
     </div>
     </div>
@@ -26,6 +27,11 @@ const { status, data, signIn, signOut } = useAuth();
 
 const onLoginWithGoogle = async () => {
     await signIn('google');
+};
+
+const onLoginWithCredentials = async () => {
+    // await signIn('credentials');
+    await navigateTo({ name: 'signIn' });
 };
 
 const onSignOut = async () => {

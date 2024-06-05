@@ -17,9 +17,11 @@
     "@prisma/client": "^5.13.0",
     "nuxt": "~3.10.3",
     "vue": "^3.4.26",
-    "vue-router": "^4.3.2"
+    "vue-router": "^4.3.2",
+    "bcrypt": "^5.1.1"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
     "prisma": "^5.13.0",
     "typescript": "^5.4.5"
   }
