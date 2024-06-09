@@ -18,6 +18,7 @@ model User {
   image         String?
   Session       Session[]
   Account       Account?
+  Albums        Album[]
  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -65,4 +66,51 @@ model VerificationToken {
   expires    DateTime
  
   @@unique([identifier, token])
+}
+
+model Album {
+  id        String @id @default(cuid())
+  userId    String
+  name      String
+  isPrivate Boolean? @default(false)
+  user      User @relation(fields: [userId], references: [id])
+  images    Image[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Image {
+  id          String @id @default(cuid())
+  albumId     String
+  isPrivate   Boolean? @default(false)
+  isNsfw      Boolean? @default(false)
+
+  album       Album? @relation(fields: [albumId], references: [id])
+  fileAssets  FileAsset[] @relation("ImageFileAsset")
+  tags        Tag[]
+}
+
+enum ModelWithFileAsset {
+  Image
+}
+
+model FileAsset {
+  id          String @id @default(cuid())
+  name        String @db.Text
+  mimeType    String
+  size        Float
+  extension   String
+
+  modelType   ModelWithFileAsset
+  modelId     String
+
+  image       Image? @relation("ImageFileAsset", fields: [modelId], references: [id], map: "image_modelId")
+}
+
+model Tag {
+  id          String @id @default(cuid())
+  name        String
+  color       String
+  images      Image[]
 }
