@@ -20,18 +20,19 @@
 </template>
 
 <script setup lang="ts">
-import { useAuth, ref, type Ref } from '#imports';
+definePageMeta({
+    middleware: ['auth'],
+    auth: {
+        unauthenticatedOnly: true,
+        navigateAuthenticatedTo: '/',
+    },
+});
 
 const name = ref('') as Ref<string>;
 const email = ref('') as Ref<string>;
 const password = ref('') as Ref<string>;
 
-// const { signIn } = useAuth();
-
 const onSubmit = async (event: Event) => {
-    // const formData = new FormData(event.target as HTMLFormElement);
-
-    // signIn('signup', { name: name.value, email: email.value, password: password.value });
     await $fetch('/api/auth/register', {
         method: 'POST',
         body: {

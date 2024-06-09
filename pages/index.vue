@@ -17,12 +17,6 @@
 
 <script setup lang="ts">
 import { useAuth } from '#imports';
-// import { PrismaClient } from '@prisma/client';
-
-// const prisma = new PrismaClient();
-
-
-
 const { status, data, signIn, signOut } = useAuth();
 
 const onLoginWithGoogle = async () => {
@@ -30,7 +24,6 @@ const onLoginWithGoogle = async () => {
 };
 
 const onLoginWithCredentials = async () => {
-    // await signIn('credentials');
     await navigateTo({ name: 'signIn' });
 };
 

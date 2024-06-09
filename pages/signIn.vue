@@ -17,11 +17,8 @@
 </template>
 
 <script setup lang="ts">
-// import { useAuth, ref, type Ref } from '#imports';
-
-
-
 definePageMeta({
+    middleware: ['auth'],
     auth: {
         unauthenticatedOnly: true,
         navigateAuthenticatedTo: '/',
@@ -35,8 +32,6 @@ const password = ref('') as Ref<string>;
 const { signIn } = useAuth();
 
 const onSubmit = (event: Event) => {
-    // const formData = new FormData(event.target as HTMLFormElement);
-
     signIn('signin', { email: email.value, password: password.value, callbackUrl: '/', });
 }
 

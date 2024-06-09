@@ -28,8 +28,11 @@ export default defineNuxtConfig({
       provider: {
           type: 'authjs',
       },
-      // baseURL: `${process.env.APP_BASE_URL}:${port}/api/auth`,
       baseURL: process.env.AUTH_ORIGIN,
+      session: {
+        enableRefreshOnWindowFocus: false,
+        enableRefreshPeriodically: false,
+      },
   },
 
   devServer: {

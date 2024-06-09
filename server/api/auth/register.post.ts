@@ -13,11 +13,11 @@ export default defineEventHandler(async (event) => {
     const { email, password, name } = await readBody<IRegisterBody>(event);
 
     if (!email || !name || !password) {
-        return createError({ statusCode: 422, message: 'incorrect data' });
+        throw createError({ statusCode: 422, message: 'incorrect data' });
     }
 
     const hashedPassword = await hash(password, 10);
-    // try {
+    try {
     await prisma.user.create({
         data: { email, password: hashedPassword, name }
     });
@@ -25,9 +25,9 @@ export default defineEventHandler(async (event) => {
     setResponseStatus(event, 201);
     return {};
 
-    // } catch (error: unknown) {
-    //     console.log('create use Error', error);
+    } catch (error: unknown) {
+        console.log('create use Error', error);
 
-    //     return createError({ statusCode: 500,  });
-    // }
+        throw createError({ statusCode: 403, message: 'registration forbidden' });
+    }
 });
