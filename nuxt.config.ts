@@ -46,6 +46,7 @@ export default defineNuxtConfig({
       googleAuthClientID: process.env.NUXT_GOOGLE_AUTH_CLIENT_ID,
       appBaseUrl: process.env.APP_BASE_URL,
       nuxtBackendUrl: process.env.NUXT_BACKEND_URL,
+      storageDriverDefault: process.env.NUXT_STORAGE_DRIVER_DEFAULT,
     },
   },
 })

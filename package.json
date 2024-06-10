@@ -18,7 +18,9 @@
     "nuxt": "~3.10.3",
     "vue": "^3.4.26",
     "vue-router": "^4.3.2",
-    "bcrypt": "^5.1.1"
+    "bcrypt": "^5.1.1",
+    "unstorage": "^1.10.2",
+    "@aws-sdk/client-s3": "3.592.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
