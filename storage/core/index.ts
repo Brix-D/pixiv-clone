@@ -1,5 +1,6 @@
 import { createStorage } from "unstorage";
 import fsDriver from 'unstorage/drivers/fs';
+import httpDriver from 'unstorage/drivers/http';
 import {
     S3Client,
     HeadObjectCommand,
@@ -22,12 +23,20 @@ const createConnectionFs = () => {
 }
 
 const createConnectionS3 = () => {
-    return new S3Client({
-        credentials: {
-            accessKeyId: '',
-            secretAccessKey: '',
-        },
-        region: '',
+    // return new S3Client({
+    //     credentials: {
+    //         accessKeyId: '',
+    //         secretAccessKey: '',
+    //     },
+    //     region: '',
+    // });
+
+    return createStorage({
+        driver: httpDriver({ base: 'https://storage.yandexcloud.net/',
+            headers: {
+                
+            },
+        }),
     });
 }
 
@@ -61,101 +70,101 @@ const selectStorageDriver = (driver: StorageDriver | null = null) => {
     return _driver;
 }
 
-const getS3Methods = (connection: S3Client) => {
-    const hasItem = async (key: string, bucket: string) => {
-        const input: HeadObjectCommandInput = {
-            Bucket: bucket,
-            Key: key,
-        };
+// const getS3Methods = (connection: S3Client) => {
+//     const hasItem = async (key: string, bucket: string) => {
+//         const input: HeadObjectCommandInput = {
+//             Bucket: bucket,
+//             Key: key,
+//         };
 
-        const command = new HeadObjectCommand(input);
-        try {
-            const data = await connection.send(command);
+//         const command = new HeadObjectCommand(input);
+//         try {
+//             const data = await connection.send(command);
 
-            return true;
-        } catch (error: unknown) {
-            return false;
-        }
-    }
+//             return true;
+//         } catch (error: unknown) {
+//             return false;
+//         }
+//     }
 
-    const getItem = async (key: string, bucket: string) => {
+//     const getItem = async (key: string, bucket: string) => {
         
-        const input: GetObjectCommandInput = {
-            Bucket: bucket,
-            Key: key,
-        };
-        const command = new GetObjectCommand(input);
-        try {
-            const data = await connection.send(command);
-            const body = data.Body;
+//         const input: GetObjectCommandInput = {
+//             Bucket: bucket,
+//             Key: key,
+//         };
+//         const command = new GetObjectCommand(input);
+//         try {
+//             const data = await connection.send(command);
+//             const body = data.Body;
 
-            if (!body) {
-                throw Error('got empty body');
-            }
+//             if (!body) {
+//                 throw Error('got empty body');
+//             }
 
-            const byteArray = await body.transformToByteArray();
-            const file = new Blob([byteArray.buffer], { type: 'application/octet-stream' })
-            return file;
+//             const byteArray = await body.transformToByteArray();
+//             const file = new Blob([byteArray.buffer], { type: 'application/octet-stream' })
+//             return file;
 
-        } catch (error: unknown) {
-            throw error;
-        }
-    }
+//         } catch (error: unknown) {
+//             throw error;
+//         }
+//     }
     
-    const setItem = async (key: string, value: any, bucket: string) => {
-        const input: PutObjectCommandInput = {
-            Bucket: bucket,
-            Key: key,
-            Body: value,
-        };
-        const command = new PutObjectCommand(input);
-        try {
-            const data = await connection.send(command);
-        } catch (error: unknown) {
-            throw error;
-        }
-    }
+//     const setItem = async (key: string, value: any, bucket: string) => {
+//         const input: PutObjectCommandInput = {
+//             Bucket: bucket,
+//             Key: key,
+//             Body: value,
+//         };
+//         const command = new PutObjectCommand(input);
+//         try {
+//             const data = await connection.send(command);
+//         } catch (error: unknown) {
+//             throw error;
+//         }
+//     }
 
-    const removeItem = async (key: string, bucket: string) => {
-        const input: DeleteObjectCommandInput = {
-            Bucket: bucket,
-            Key: key,
-        };
-        const command = new DeleteObjectCommand(input);
-        try {
-            const data = await connection.send(command);
-        } catch (error: unknown) {
-            throw error;
-        }
-    }
+//     const removeItem = async (key: string, bucket: string) => {
+//         const input: DeleteObjectCommandInput = {
+//             Bucket: bucket,
+//             Key: key,
+//         };
+//         const command = new DeleteObjectCommand(input);
+//         try {
+//             const data = await connection.send(command);
+//         } catch (error: unknown) {
+//             throw error;
+//         }
+//     }
 
-    return {
-        hasItem,
-        getItem,
-        setItem,
-        removeItem,
-    };
-};
+//     return {
+//         hasItem,
+//         getItem,
+//         setItem,
+//         removeItem,
+//     };
+// };
 
-const getStorageMethods = (driver: StorageDriver, connection: ReturnType<typeof createStorageConnection>) => {
+// const getStorageMethods = (driver: StorageDriver, connection: ReturnType<typeof createStorageConnection>) => {
 
-    let methods = {};
+//     let methods = {};
 
-    switch (driver) {
-        case StorageDriver.FS:
-            methods = { ...connection };
-            break;
-        case StorageDriver.S3:
-            if (connection instanceof S3Client) {
-                methods = getS3Methods(connection);
-            }
-            break;
-        default:
-            throw createError({ message: 'unable to get storage methods' });
-    }
+//     switch (driver) {
+//         case StorageDriver.FS:
+//             methods = { ...connection };
+//             break;
+//         case StorageDriver.S3:
+//             if (connection instanceof S3Client) {
+//                 methods = getS3Methods(connection);
+//             }
+//             break;
+//         default:
+//             throw createError({ message: 'unable to get storage methods' });
+//     }
 
-    return methods;
-};
+//     return methods;
+// };
 
 let storageClients: Record<StorageDriver[number], ReturnType<typeof createStorageConnection>> = {};
 
@@ -167,11 +176,13 @@ export const useStorage = (driver: StorageDriver | null = null) => {
         storageClients[_driver] = createStorageConnection(_driver);
     }
 
-    let storageMethods: Record<string, Function> = getStorageMethods(_driver, storageClients[_driver]);
+    // let storageMethods: Record<string, Function> = getStorageMethods(_driver, storageClients[_driver]);
 
-    return {
-        ...storageMethods,
-    };
+//     return {
+//         ...storageMethods,
+//     };
+
+    return storageClients[_driver];
 };
 
 
