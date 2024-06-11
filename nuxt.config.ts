@@ -24,6 +24,7 @@ export default defineNuxtConfig({
       },
   },
   modules: ['@sidebase/nuxt-auth'],
+
   auth: {
       provider: {
           type: 'authjs',
@@ -35,6 +36,18 @@ export default defineNuxtConfig({
       },
   },
 
+  // s3: {
+  //   driver: 's3',
+  //   bucket: 'pinterest',
+  //   endpoint: 'https://storage.yandexcloud.net/',
+  //   region: 'ru-central1',
+  //   accessKeyId: process.env.NUXT_STORAGE_S3_ACCESS_KEY_ID,
+  //   secretAccessKey: process.env.NUXT_STORAGE_S3_ACCESS_KEY_SECRET,
+  //   accept: '^image/(png|jpeg|png|gif)',
+  //   maxSizeMb: 10,
+  //   server: false,
+  // },
+
   devServer: {
     port,
   },
@@ -42,11 +55,23 @@ export default defineNuxtConfig({
   runtimeConfig: {
     googleAuthSecret: process.env.NUXT_GOOGLE_AUTH_SECRET,
     authSecret: process.env.NUXT_AUTH_SECRET,
+
+    // storage
+    storageDriverDefault: process.env.NUXT_STORAGE_DRIVER_DEFAULT,
+    storageS3AccessKey: process.env.NUXT_STORAGE_S3_ACCESS_KEY_ID,
+    storageS3AccessSecret: process.env.NUXT_STORAGE_S3_ACCESS_KEY_SECRET,
+    storageS3Endpoint: process.env.NUXT_STORAGE_S3_ENDPOINT,
+    storageS3Bucket: process.env.NUXT_STORAGE_S3_BUCKET,
+    storageS3Region: process.env.NUXT_STORAGE_S3_REGION,
+    
     public: {
       googleAuthClientID: process.env.NUXT_GOOGLE_AUTH_CLIENT_ID,
       appBaseUrl: process.env.APP_BASE_URL,
       nuxtBackendUrl: process.env.NUXT_BACKEND_URL,
-      storageDriverDefault: process.env.NUXT_STORAGE_DRIVER_DEFAULT,
     },
+  },
+
+  build: {
+    transpile: ['jstoxml'],
   },
 })

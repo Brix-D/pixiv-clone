@@ -5,19 +5,25 @@
         </p>
 
         <pre>
-            {{ data }}
+            {{ authData }}
         </pre>
         <div :class="$style['button-box']">
         <button @click="onLoginWithGoogle"> login With Google </button>
         <button @click="onLoginWithCredentials"> login With Password </button>
         <button @click="onSignOut"> logout </button>
-    </div>
+
+      
+        </div>
+
+        <img v-if="meImage" :src="meImage" alt="me">
     </div>
 </template>
 
 <script setup lang="ts">
 import { useAuth } from '#imports';
-const { status, data, signIn, signOut } = useAuth();
+
+
+const { status, data: authData, signIn, signOut } = useAuth();
 
 const onLoginWithGoogle = async () => {
     await signIn('google');
@@ -30,6 +36,15 @@ const onLoginWithCredentials = async () => {
 const onSignOut = async () => {
     await signOut();
 };
+
+const { data: { value: meImage } } = await useAsyncData('me', async () => {
+    const me = await $fetch('/api/s3/me', {
+        method: 'GET',
+    });
+
+    return me.image;
+});
+
 </script>
 
 <style module>
