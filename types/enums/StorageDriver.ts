@@ -1,5 +1,5 @@
 export enum StorageDriver {
-    FS = 'fs',
+    FS = 'uploads',
     S3 = 's3',
 }
 

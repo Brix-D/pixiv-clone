@@ -37,13 +37,16 @@ const onSignOut = async () => {
     await signOut();
 };
 
-const { data: { value: meImage } } = await useAsyncData('me', async () => {
+const { data: { value: meImage }, error } = await useAsyncData('me', async () => {
     const me = await $fetch('/api/s3/me', {
         method: 'GET',
     });
 
     return me.image;
 });
+
+console.log('meImage', meImage);
+console.log('error', error.value);
 
 </script>
 

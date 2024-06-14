@@ -1,205 +1,169 @@
-import crypto from 'node:crypto'
-import { $fetch } from 'ofetch'
 import { defineDriver } from 'unstorage'
-import { parseString as xml2js } from 'xml2js'
-import { toXML as js2xml } from 'jstoxml'
-import { joinURL, withQuery } from 'ufo'
-import { AwsClient } from 'aws4fetch'
-
-if (!globalThis.crypto) {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  globalThis.crypto = crypto
-}
 
 export interface S3DriverOptions {
   accessKeyId: string
   secretAccessKey: string
   endpoint: string
   region: string
-  bucket: string
+  bucket?: string
   accountId?: string
 }
 
-type GetItemOptions = undefined | {
-  headers?: Record<string, string>
-}
-
-type SetItemOptions = undefined | {
-  headers?: Record<string, string>
-  meta?: Record<string, string>
-}
+import {
+    S3Client,
+    GetObjectCommand,
+    HeadObjectCommand,
+    PutObjectCommand,
+    DeleteObjectCommand,
+    ListObjectsCommand,
+    DeleteObjectsCommand,
+    type GetObjectCommandInput,
+    type HeadObjectCommandInput,
+    type PutObjectCommandInput,
+    type DeleteObjectCommandInput,
+    type ListObjectsCommandInput,
+    type DeleteObjectsCommandInput,
+    type ObjectIdentifier,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl, S3RequestPresigner } from '@aws-sdk/s3-request-presigner';
 
 const DRIVER_NAME = 's3'
 
 export default defineDriver((options: S3DriverOptions) => {
-  let awsClient: AwsClient
-
-  function getAwsClient() {
-    if (!awsClient) {
-      awsClient = new AwsClient({
-        accessKeyId: options.accessKeyId,
-        secretAccessKey: options.secretAccessKey,
+    const storageClient = new S3Client({
+        credentials: {
+            accessKeyId: options.accessKeyId,
+            secretAccessKey: options.secretAccessKey,
+        },
+        endpoint: options.endpoint,
         region: options.region,
-        service: DRIVER_NAME,
-      })
-    }
-    return awsClient
-  }
+    });
 
-  const normalizedKey = (key: string) => key.replace(/:/g, '/').replace(/\/+$/, '')
+    // const storageClientPresigner = new S3RequestPresigner({ ...storageClient.config });
 
-  const awsUrlWithoutKey = joinURL(options.endpoint, options.bucket)
+    return {
+        name: DRIVER_NAME,
+        options,
+        async getItem(key, opts) {
+            const [bucket, ..._keyParts] = key.split(/:/);
+            const _key = _keyParts.join('/');
 
-  const awsUrlWithKey = (key: string) => joinURL(options.endpoint, options.bucket, normalizedKey(key))
+            const input: GetObjectCommandInput = {
+                Bucket: bucket,
+                Key: _key,
+            };
+            const command = new GetObjectCommand(input);
+            const signedUrl = await getSignedUrl(storageClient, command, { expiresIn: 3600,  });
+            // const presignedCommand =  await storageClientPresigner.presign();
+            // const data = await storageClient.send(command);
+            // console.log('signedUrl', signedUrl);
+            // const data = await $fetch<GetObjectCommandOutput>(signedUrl, {
+            //     headers: {
+                    
+            //     }
+            // });
 
-  // https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html
-  async function _getMeta(key: string) {
-    const request = await getAwsClient().sign(awsUrlWithKey(key), {
-      method: 'HEAD',
-    })
+            // const body = data.Body;
+    
+            // if (!body) {
+            //     throw createError({ message: 'got empty body' });
+            // }
+    
+            // const byteArray = await body.transformToByteArray();
+            // const file = new Blob([byteArray.buffer], { type: 'application/octet-stream' })
+            // return file;
+            return signedUrl;
+        },
+        async hasItem(key, opts) {
+            const [bucket, ..._keyParts] = key.split(/:/);
+            const _key = _keyParts.join('/');
 
-    return $fetch.raw(request)
-      .then((res) => {
-        const metaHeaders: HeadersInit = {}
-        for (const [key, value] of res.headers.entries()) {
-          const match = /x-amz-meta-(.*)/.exec(key)
-          if (match) {
-            metaHeaders[match[1]] = value
-          }
-        }
-        return metaHeaders
-      })
-  }
+            const input: HeadObjectCommandInput = {
+                Bucket: bucket,
+                Key: _key,
+            };
+    
+            const command = new HeadObjectCommand(input);
+            try {
+                const data = await storageClient.send(command);
+                
+                console.log('hasItem response', data);
 
-  // https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html
-  async function _getKeys(base?: string) {
-    const url = withQuery(awsUrlWithoutKey, { prefix: base && normalizedKey(base) })
+                return true;
+            } catch (error: unknown) {
+                return false;
+            }
+        },
+        async setItem(key, value, opts) {
+            const [bucket, ..._keyParts] = key.split(/:/);
+            const _key = _keyParts.join('/');
 
-    const request = await getAwsClient().sign(url, {
-      method: 'GET',
-    })
+            const input: PutObjectCommandInput = {
+                Bucket: bucket,
+                Key: _key,
+                Body: value,
+            };
+            const command = new PutObjectCommand(input);
+            const data = await storageClient.send(command);
 
-    return $fetch(request)
-      .then((res) => {
-        let keys: Array<string> = []
-        xml2js(res, (error, result) => {
-          if (error === null) {
-            const contents = result.ListBucketResult.Contents as Array<{ Key: string }>
-            keys = contents.map(item => item.Key[0])
-          }
-        })
-        return keys
-      }).catch(() => [])
-  };
+            console.log('setItem response', data);
+        },
+        async removeItem(key, opts) {
+            const [bucket, ..._keyParts] = key.split(/:/);
+            const _key = _keyParts.join('/');
 
-  // https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html
-  async function _getItemRaw(key: string, opts: GetItemOptions = {}) {
-    const request = await getAwsClient().sign(awsUrlWithKey(key), {
-      method: 'GET',
-    })
-    return $fetch.raw(request)
-      .then((res) => {
-        opts.headers ||= {}
+            const input: DeleteObjectCommandInput = {
+                Bucket: bucket,
+                Key: _key,
+            };
+            const command = new DeleteObjectCommand(input);
+            const data = await storageClient.send(command);
 
-        for (const [key, value] of res.headers.entries()) {
-          opts.headers[key] = value
-        }
+            console.log('removeItem response', data);
+        },
+        async getKeys(base, opts) {
+            const bucket = base;
 
-        return res._data
-      })
-      .catch((error) => {
-        return null
-    })
-  }
+            const input: ListObjectsCommandInput = {
+                Bucket: bucket,
+            };
 
-  // https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html
-  async function _setItemRaw(key: string, value: string | ArrayBuffer | Blob, opts: SetItemOptions = {}) {
-    const metaHeaders: HeadersInit = {}
+            const command = new ListObjectsCommand(input);
+            const response = await storageClient.send(command);
 
-    if (typeof opts.meta === 'object') {
-      for (const [key, value] of Object.entries(opts.meta)) {
-        metaHeaders[`x-amz-meta-${key}`] = value
-      }
-    }
+            console.log('getKeys response', response);
+            if (!response.Contents) {
+               return [];
+            }
 
-    const request = await getAwsClient().sign(awsUrlWithKey(key), {
-      method: 'PUT',
-      body: value,
-      headers: {
-        ...opts.headers,
-        ...metaHeaders,
-      },
-    })
+            const keys = response.Contents.map((object) => {
+                return object.Key as string;
+            });
 
-    return $fetch(request)
-  }
+            return keys;
+        },
+        async clear(base, opts) {
+            const bucket = base;
 
-  // https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
-  async function _removeItem(key: string) {
-    const request = await getAwsClient().sign(awsUrlWithKey(key), {
-      method: 'DELETE',
-    })
+            const keys = await this.getKeys(base, opts);
 
-    return $fetch(request)
-  }
+            const objectsToDelete: ObjectIdentifier[] = keys.map((key) => {
+                return {
+                    Key: key,
+                };
+            });
 
-  return {
-    name: DRIVER_NAME,
-    options,
+            const input: DeleteObjectsCommandInput = {
+                Bucket: bucket,
+                Delete: {
+                    Objects: objectsToDelete,
+                },
+            };
 
-    getItemRaw: _getItemRaw,
-    setItemRaw: _setItemRaw,
-    getKeys: _getKeys,
-    removeItem: _removeItem,
+            const command = new DeleteObjectsCommand(input);
+            const response = await storageClient.send(command);
 
-    getMeta: key => _getMeta(key).catch(() => ({})),
-
-    hasItem: key => _getMeta(key).then(() => true).catch(() => false),
-
-    getItem(key, opts: GetItemOptions) {
-      return _getItemRaw(key, opts)
-    },
-
-    setItem(key, value, opts: SetItemOptions = {}) {
-      let contentType = 'text/plain'
-
-      try {
-        JSON.parse(value)
-        contentType = 'application/json'
-      }
-      catch (_) { /* empty */ }
-
-      opts.headers = {
-        'Content-Type': contentType,
-        'Content-Length': value.length.toString(),
-        ...opts.headers,
-      }
-
-      return _setItemRaw(key, value, opts)
-    },
-
-    // https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObjects.html
-    async clear(base) {
-      const keys = await _getKeys(base)
-
-      if (options.accountId) {
-        const body = js2xml({
-          Delete: keys.map(key => ({ Object: { Key: key } })),
-        })
-
-        const request = await getAwsClient().sign(awsUrlWithoutKey, {
-          method: 'DELETE',
-          body,
-          headers: {
-            'x-amz-expected-bucket-owner': options.accountId,
-          },
-        })
-
-        await $fetch(request)
-      }
-
-      await Promise.all(keys.map(key => _removeItem(key)))
-    },
-  }
-})
+            console.log('clear response', response);
+        },
+    };
+});

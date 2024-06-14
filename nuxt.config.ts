@@ -1,5 +1,7 @@
 
 
+import { resolve } from 'path';
+
 const isDev = process.env.NODE_ENV !== 'production';
 
 const port = isDev ? +(process.env.DEV_PORT ?? 8080): +(process.env.PROD_PORT ?? 3000);
@@ -23,6 +25,7 @@ export default defineNuxtConfig({
       }],
       },
   },
+
   modules: ['@sidebase/nuxt-auth'],
 
   auth: {
@@ -71,7 +74,40 @@ export default defineNuxtConfig({
     },
   },
 
-  build: {
-    transpile: ['jstoxml'],
+  nitro: {
+    storage: {
+      uploads: {
+        driver: 'fs',
+        base: './.data/files',
+      },
+    },
+
+    // publicAssets: [
+    //   {
+    //     baseURL: 'uploads',
+    //     dir: './.data/files',
+    //     maxAge: 60,
+    //     // fallthrough: true,
+    //   },
+    // ],
+    // compressPublicAssets: {
+    //   brotli: true,
+    //   gzip: true,
+    // },
+
+    // routeRules: {
+    //   "/uploads/**": {
+    //     // headers: { 'cache-control': `public,max-age=${60},s-maxage=${60}` }
+    //     cache: {
+    //       maxAge: 60,
+    //     },
+    //   },
+    //   "/_nuxt/**": {
+    //     // headers: { 'cache-control': `public,max-age=${60},s-maxage=${60}` }
+    //     cache: {
+    //       maxAge: 60,
+    //     },
+    //   },
+    // }
   },
 })

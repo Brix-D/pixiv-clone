@@ -1,20 +1,29 @@
-// import {  } from 'h3';
-
 import { useStorage } from '#imports';
+import { StorageDriver } from '@/types/enums/StorageDriver';
 
 export default defineEventHandler(async (event) => {
-    const { getItem, getMeta } = useStorage('s3');
+    const { getItem } = useStorage(StorageDriver.S3);
+
     const config = useRuntimeConfig();
 
+    // s3 image
     const filename = 'MddQPfwiDMM.jpg';
+    // fs driver image
+    // const filename = 'blins.jpg';
+    const filePath =`${config.storageS3Bucket}:${filename}`;
     try {
-        const me = await getItem(filename);
-        if (!me) {
+        const servePath = await getItem(filePath);
+        if (!servePath) {
             throw new Error('not found me');
         }
 
-        const mePath = `${config.storageS3Endpoint}/${config.storageS3Bucket}/${filename}`;
-        return { image: mePath };
+
+        // fs driver almost works path
+        // const servePath = `/uploads/${filePath}`;
+        // console.log('mePath', servePath);
+       
+
+        return { image: servePath };
     } catch (error) {
         throw createError({ message: 'not found me', status: 404 });
     }
