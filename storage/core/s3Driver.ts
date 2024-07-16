@@ -1,4 +1,4 @@
-import { defineDriver } from 'unstorage'
+import { defineDriver, type Driver, type TransactionOptions } from 'unstorage'
 
 export interface S3DriverOptions {
   accessKeyId: string
@@ -25,23 +25,25 @@ import {
     type DeleteObjectsCommandInput,
     type ObjectIdentifier,
 } from '@aws-sdk/client-s3';
-import { getSignedUrl, S3RequestPresigner } from '@aws-sdk/s3-request-presigner';
 
-const DRIVER_NAME = 's3'
+const DRIVER_NAME = 's3';
+
+export let storageClient: S3Client;
 
 export default defineDriver((options: S3DriverOptions) => {
-    const storageClient = new S3Client({
-        credentials: {
-            accessKeyId: options.accessKeyId,
-            secretAccessKey: options.secretAccessKey,
-        },
-        endpoint: options.endpoint,
-        region: options.region,
-    });
 
-    // const storageClientPresigner = new S3RequestPresigner({ ...storageClient.config });
+    if (!storageClient) {
+        storageClient = new S3Client({
+            credentials: {
+                accessKeyId: options.accessKeyId,
+                secretAccessKey: options.secretAccessKey,
+            },
+            endpoint: options.endpoint,
+            region: options.region,
+        });
+    }
 
-    return {
+    const driver: Driver = {
         name: DRIVER_NAME,
         options,
         async getItem(key, opts) {
@@ -53,26 +55,22 @@ export default defineDriver((options: S3DriverOptions) => {
                 Key: _key,
             };
             const command = new GetObjectCommand(input);
-            const signedUrl = await getSignedUrl(storageClient, command, { expiresIn: 3600,  });
-            // const presignedCommand =  await storageClientPresigner.presign();
-            // const data = await storageClient.send(command);
-            // console.log('signedUrl', signedUrl);
-            // const data = await $fetch<GetObjectCommandOutput>(signedUrl, {
-            //     headers: {
-                    
-            //     }
-            // });
+            const data = await storageClient.send(command);
 
-            // const body = data.Body;
+            const body = data.Body;
     
             // if (!body) {
-            //     throw createError({ message: 'got empty body' });
+            //     return null;
+            //     // throw createError({ message: 'got empty body' });
             // }
     
             // const byteArray = await body.transformToByteArray();
             // const file = new Blob([byteArray.buffer], { type: 'application/octet-stream' })
             // return file;
-            return signedUrl;
+
+            const serializedValue = await body?.transformToString('utf-8') ?? null;
+
+            return serializedValue;
         },
         async hasItem(key, opts) {
             const [bucket, ..._keyParts] = key.split(/:/);
@@ -166,4 +164,6 @@ export default defineDriver((options: S3DriverOptions) => {
             console.log('clear response', response);
         },
     };
+
+    return driver;
 });

@@ -1,27 +1,18 @@
-import { useStorage } from '#imports';
-import { StorageDriver } from '@/types/enums/StorageDriver';
+import { useImages } from '@/server/utils/useImages';
 
 export default defineEventHandler(async (event) => {
-    const { getItem } = useStorage(StorageDriver.S3);
+    const { getItemPath, getItem } = useImages();
 
     const config = useRuntimeConfig();
 
     // s3 image
     const filename = 'MddQPfwiDMM.jpg';
-    // fs driver image
-    // const filename = 'blins.jpg';
     const filePath =`${config.storageS3Bucket}:${filename}`;
     try {
-        const servePath = await getItem(filePath);
+        const servePath = await getItemPath(filePath);
         if (!servePath) {
             throw new Error('not found me');
         }
-
-
-        // fs driver almost works path
-        // const servePath = `/uploads/${filePath}`;
-        // console.log('mePath', servePath);
-       
 
         return { image: servePath };
     } catch (error) {
