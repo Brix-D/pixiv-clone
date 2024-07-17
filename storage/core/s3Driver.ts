@@ -84,8 +84,6 @@ export default defineDriver((options: S3DriverOptions) => {
             const command = new HeadObjectCommand(input);
             try {
                 const data = await storageClient.send(command);
-                
-                console.log('hasItem response', data);
 
                 return true;
             } catch (error: unknown) {
@@ -103,8 +101,6 @@ export default defineDriver((options: S3DriverOptions) => {
             };
             const command = new PutObjectCommand(input);
             const data = await storageClient.send(command);
-
-            console.log('setItem response', data);
         },
         async removeItem(key, opts) {
             const [bucket, ..._keyParts] = key.split(/:/);
@@ -116,8 +112,6 @@ export default defineDriver((options: S3DriverOptions) => {
             };
             const command = new DeleteObjectCommand(input);
             const data = await storageClient.send(command);
-
-            console.log('removeItem response', data);
         },
         async getKeys(base, opts) {
             const bucket = base;

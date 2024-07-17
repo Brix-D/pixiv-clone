@@ -89,6 +89,9 @@ model Image {
   album       Album? @relation(fields: [albumId], references: [id])
   fileAssets  FileAsset[] @relation("ImageFileAsset")
   tags        Tag[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum ModelWithFileAsset {
@@ -106,6 +109,9 @@ model FileAsset {
   modelId     String
 
   image       Image? @relation("ImageFileAsset", fields: [modelId], references: [id], map: "image_modelId")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Tag {
@@ -113,4 +119,7 @@ model Tag {
   name        String
   color       String
   images      Image[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
