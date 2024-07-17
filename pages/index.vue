@@ -22,7 +22,6 @@
 <script setup lang="ts">
 import { useAuth } from '#imports';
 
-
 const { status, data: authData, signIn, signOut } = useAuth();
 
 const onLoginWithGoogle = async () => {

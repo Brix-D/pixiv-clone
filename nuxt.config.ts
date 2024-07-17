@@ -16,7 +16,6 @@ export default defineNuxtConfig({
             {
                 src: 'https://accounts.google.com/gsi/client',
                 async: true,
-                // defer: true,
             }
         ],
         meta: [{
@@ -38,7 +37,6 @@ export default defineNuxtConfig({
         enableRefreshPeriodically: false,
       },
   },
-
   // s3: {
   //   driver: 's3',
   //   bucket: 'pinterest',

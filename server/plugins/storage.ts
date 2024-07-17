@@ -1,6 +1,6 @@
 import { useStorage } from '#imports';
-import { resolve } from 'path';
-import fsDriver from 'unstorage/drivers/fs';
+// import { resolve } from 'path';
+// import fsDriver from 'unstorage/drivers/fs';
 
 import s3Driver from '@/storage/core/s3Driver';
 // import { useNuxtApp } from 'nuxt/app';
