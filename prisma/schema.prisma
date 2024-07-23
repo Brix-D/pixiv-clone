@@ -19,6 +19,7 @@ model User {
   Session       Session[]
   Account       Account?
   Albums        Album[]
+  images        Image[]
  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -82,16 +83,18 @@ model Album {
 
 model Image {
   id          String @id @default(cuid())
-  albumId     String
+  albumId     String?
+  userId      String
   isPrivate   Boolean? @default(false)
   isNsfw      Boolean? @default(false)
 
+  user        User @relation(fields: [userId], references: [id])
   album       Album? @relation(fields: [albumId], references: [id])
   fileAssets  FileAsset[] @relation("ImageFileAsset")
   tags        Tag[]
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt @default(now())
 }
 
 enum ModelWithFileAsset {
@@ -111,7 +114,7 @@ model FileAsset {
   image       Image? @relation("ImageFileAsset", fields: [modelId], references: [id], map: "image_modelId")
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt @default(now())
 }
 
 model Tag {
@@ -121,5 +124,5 @@ model Tag {
   images      Image[]
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt @default(now())
 }

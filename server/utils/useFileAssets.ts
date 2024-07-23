@@ -1,7 +1,8 @@
 import { useStorage } from '#imports';
 import crypto from 'node:crypto';
-// import { storageClient } from '@/storage/core/s3Driver';
-import { PrismaClient, FileAsset, ModelWithFileAsset } from '@prisma/client';
+import fs from 'node:fs';
+import { usePrismaClient } from '@/composables/usePrsimaClient';
+import { FileAsset, ModelWithFileAsset } from '@prisma/client';
 import { getItemUrl } from '@/server/utils/getItemUrl';
 import { FileAssetsItemResponse, FileAssetsPayload } from '@/types/fileAssets';
 import { StorageDriver } from '@/types/enums/StorageDriver';
@@ -23,13 +24,7 @@ interface FilesTempData {
 }
 
 export const useFileAssets = async (model: ModelInput, modelType: ModelWithFileAsset = ModelWithFileAsset.Image) => {
-    const prisma = new PrismaClient();
-
-    // const parentModel = await prisma[model].findFirst(
-    //     {
-    //         where: { id: modelId },
-    //     }
-    // );
+    const prisma = usePrismaClient();
 
     const config = useRuntimeConfig();
 
@@ -53,7 +48,11 @@ export const useFileAssets = async (model: ModelInput, modelType: ModelWithFileA
             const fileOriginal = fileToCreate.file;
 
             const mimeType = fileOriginal.type;
-            const extension = mimeType.split('/')[1];
+            let extension = mimeType.split('/')[1];
+
+            if (extension === 'jpeg') {
+                extension = 'jpg';
+            }
 
             const fileName = _generateFileNameRandom();
             const fileNameWithDir = _getFileDirectory(fileName);
@@ -75,7 +74,7 @@ export const useFileAssets = async (model: ModelInput, modelType: ModelWithFileA
         for (let [index, fileTemp] of filesTemp.entries()) {
             const buffer = Buffer.from(await fileTemp.file.arrayBuffer());
             const base64File = buffer.toString('base64');
-            const promiseStorage = setItem(`${config.storageS3Bucket}:${fileTemp.name}.${fileTemp.extension}`, base64File);
+            const promiseStorage = setItem(`${config.storageS3Bucket}:${fileTemp.name}.${fileTemp.extension}`, base64File, { contentType: fileTemp.mimeType });
 
             const promiseQuery = prisma.$transaction([
                 prisma.fileAsset.create({
@@ -135,13 +134,15 @@ export const useFileAssets = async (model: ModelInput, modelType: ModelWithFileA
                 const isExists = await hasItem(`${config.storageS3Bucket}:${file.name}.${file.extension}`);
                 if (isExists) {
                     await removeItem(`${config.storageS3Bucket}:${file.name}.${file.extension}`);
+                    await prisma.fileAsset.delete({
+                        where: {
+                            id: file.id,
+                        },
+                    });
+                } else {
+                    console.log('not deleted', `${config.storageS3Bucket}:${file.name}.${file.extension}`);
                 }
-
-                await prisma.fileAsset.delete({
-                    where: {
-                        id: file.id,
-                    },
-                });
+              
             } catch (error: unknown) {
                 console.log('delete FileAsset error', error);
             }

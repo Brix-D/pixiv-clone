@@ -3,7 +3,7 @@ import { type H3Event } from 'h3';
 import { NuxtAuthHandler } from '#auth';
 import { DefaultSession, DefaultUser, Session, User } from 'next-auth';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
-import { PrismaClient } from '@prisma/client';
+import { usePrismaClient } from '@/composables/usePrsimaClient';
 import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
@@ -23,7 +23,7 @@ declare module "next-auth" {
 
 const runtimeConfig = useRuntimeConfig();
 
-const prisma = new PrismaClient();
+const prisma = usePrismaClient();
 
 const COOKIES_LIFE_TIME = 24 * 60 * 60;
 const COOKIE_PREFIX = process.env.NODE_ENV === 'production' ? '__Secure-' : '';

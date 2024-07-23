@@ -1,6 +1,6 @@
-import { PrismaClient } from '@prisma/client';
-import { getToken } from '#auth';
+import { usePrismaClient } from '@/composables/usePrsimaClient';
 import { useFileAssets } from '@/server/utils/useFileAssets';
+import { getCurrentUser } from '@/server/utils/getCurrentUser';
 import { FileAssetsPayload } from '@/types/fileAssets';
 
 
@@ -10,7 +10,6 @@ const parseFormDataNestedFiles = (bodyFormData: FormData): FileAssetsPayload['cr
     const patternKey = new RegExp(/^create\[(\d+)\]\[file\]$/);
 
     for (const [key, value] of bodyFormData.entries()) {
-
         const isFile = patternKey.test(key);
 
         if (!isFile) {
@@ -38,31 +37,9 @@ export default defineEventHandler(async (event) => {
         });
     }
 
-    const prisma = new PrismaClient();
+    const prisma = usePrismaClient();
 
-    const token = await getToken({ event });
-
-    if (!token || token && !token.sub) {
-        throw createError({
-            status: 401,
-            statusCode: 401,
-            message: 'Unauthorized',
-        });
-    }
-
-    const currentUser = await prisma.user.findFirst({
-        where: {
-            id: token.sub,
-        },
-    });
-
-    if (!currentUser) {
-        throw createError({
-            status: 401,
-            statusCode: 401,
-            message: 'Unauthorized',
-        });
-    }
+    const currentUser = await getCurrentUser(event);
 
     const defaultAlbum = await prisma.album.findFirst({
         where: {
@@ -79,15 +56,13 @@ export default defineEventHandler(async (event) => {
     }
 
     const newImage = await prisma.image.create({
-        data: { albumId: defaultAlbum.id, isNsfw: !!bodyFormData.get('nsfw') },
+        data: { albumId: defaultAlbum.id, isNsfw: !!bodyFormData.get('nsfw'), userId: currentUser.id },
     });
 
     let syncPayload: FileAssetsPayload = {
         create: parseFormDataNestedFiles(bodyFormData),
         delete: bodyFormData.getAll('delete[]') as FileAssetsPayload['delete'],
     };
-
-    console.log(syncPayload);
 
     const { sync } = await useFileAssets(newImage);
 

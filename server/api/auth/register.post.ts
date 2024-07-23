@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { usePrismaClient } from '@/composables/usePrsimaClient';
 import { hash, compare } from 'bcrypt';
-
-const prisma = new PrismaClient();
 
 interface IRegisterBody {
     name: string;
@@ -10,6 +8,8 @@ interface IRegisterBody {
 };
 
 export default defineEventHandler(async (event) => {
+    const prisma = usePrismaClient();
+
     const { email, password, name } = await readBody<IRegisterBody>(event);
 
     if (!email || !name || !password) {

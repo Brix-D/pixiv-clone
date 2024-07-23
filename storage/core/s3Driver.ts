@@ -94,10 +94,13 @@ export default defineDriver((options: S3DriverOptions) => {
             const [bucket, ..._keyParts] = key.split(/:/);
             const _key = _keyParts.join('/');
 
+            const buffer = Buffer.from(value, 'base64');
+
             const input: PutObjectCommandInput = {
                 Bucket: bucket,
                 Key: _key,
-                Body: value,
+                Body: buffer,
+                ContentType: opts?.contentType ?? 'application/octet-stream',
             };
             const command = new PutObjectCommand(input);
             const data = await storageClient.send(command);
