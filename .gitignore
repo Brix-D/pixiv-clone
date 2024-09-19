@@ -27,3 +27,5 @@ logs
 
 mysql
 mysql_logs
+
+rabbitmq

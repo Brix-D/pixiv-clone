@@ -4,7 +4,7 @@ services:
 
   mysql:
     image: mysql:5.7.22
-    restart: always
+    # restart: always
     tty: true
     ports:
       - "3306:3306"
@@ -13,3 +13,16 @@ services:
       - ./mysql_logs:/var/log/mysql
       - ./mysql.cnf:/etc/mysql/conf.d/mysql.cnf:ro
     env_file: .env
+  
+  rabbitmq:
+    image: rabbitmq:3.10.7-management
+    hostname: rabbitmq
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=rabbit
+      - RABBITMQ_DEFAULT_PASS=rabbit
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit disk_free_limit 2147483648
+    volumes:
+      - ./rabbitmq:/var/lib/rabbitmq
+    ports:
+      - "15672:15672"
